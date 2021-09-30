@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { check, validationResult } = require('express-validator')
 const User = require('../models/User')
+const Movie = require('../models/Movie')
 const authMiddleware = require('../middlewares/auth')
 
 const router = new Router()
@@ -37,7 +38,7 @@ router.post(
 
             const candidate = await User.findOne({ email })
             if (candidate) {
-                return res.status(400).json({ msg: 'User with such email already exists' })
+                return res.status(400).json({ error: 'User with such email already exists' })
             }
 
             const hashPassword = await bcrypt.hash(password, 8)
@@ -51,7 +52,7 @@ router.post(
 
             return res.status(201).json({ msg: 'User was created successfully' })
         } catch (error) {
-            return res.status(500).json({ msg: error.message })
+            return res.status(500).json({ error: error.message })
         }
     }
 )
@@ -62,14 +63,22 @@ router.post(
         try {
             const { email, password } = req.body
 
-            const user = await User.findOne({ email })
+            const user =
+                await User
+                    .findOne({ email })
+                    .populate([
+                        'favoriteMovies',
+                        'watchLaterMovies',
+                        'testResult'
+                    ])
+
             if (!user) {
-                return res.status(404).json({ msg: 'User with such email not found' })
+                return res.status(404).json({ error: 'User with such email not found' })
             }
 
             const isPasswordValid = await bcrypt.compareSync(password, user.password)
             if (!isPasswordValid) {
-                return res.status(400).json({ msg: 'Invalid password' })
+                return res.status(400).json({ error: 'Invalid password' })
             }
 
             const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, { expiresIn: '1h' })
@@ -85,7 +94,7 @@ router.post(
                 }
             })
         } catch (error) {
-            return res.status(500).json({ msg: error.message })
+            return res.status(500).json({ error: error.message })
         }
     }
 )
@@ -95,7 +104,17 @@ router.get(
     authMiddleware,
     async (req, res) => {
         try {
-            const user = await User.findOne({ _id: req.user.id })
+            const user =
+                await User
+                    .findOne({ _id: req.user.id })
+                    .populate([
+                        'favoriteMovies',
+                        'watchLaterMovies',
+                        'testResult'
+                    ])
+
+            console.log(user)
+
 
             const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, { expiresIn: '1h' })
             return res.status(200).json({
@@ -110,53 +129,66 @@ router.get(
                 }
             })
         } catch (error) {
-            return res.status(500).json({ msg: error.message })
+            return res.status(500).json({ error: error.message })
         }
     }
 )
 
-router.put('/favorite', async (req, res) => {
-    const { user_id, movie } = req.body
+router.put(
+    '/favorite',
+    authMiddleware,
+    async (req, res) => {
+        const { movie_id } = req.body
 
-    try {
-        await User.findOneAndUpdate(
-            { _id: user_id },
-            { $push: { favoriteMovies: movie } },
-            { upsert: true }
-        )
+        try {
+            await User.findOneAndUpdate(
+                { _id: req.user.id },
+                { $push: { favoriteMovies: movie_id } },
+                { upsert: true }
+            )
 
-        return res.status(200).json(movie)
-    } catch (error) {
-        return res.status(400).json({ error: error.message })
-    }
-})
+            const movie = await Movie.findOne({ _id: movie_id })
 
-router.put('/watchLater', async (req, res) => {
-    const { user_id, movie } = req.body
+            return res.status(200).json(movie)
+        } catch (error) {
+            return res.status(400).json({ error: error.message })
+        }
+    })
 
-    try {
-        await User.findOneAndUpdate(
-            { _id: user_id },
-            { $push: { watchLaterMovies: movie } },
-            { upsert: true }
-        )
+router.put(
+    '/watchLater',
+    authMiddleware,
+    async (req, res) => {
+        const { movie_id } = req.body
 
-        return res.status(200).json(movie)
-    } catch (error) {
-        return res.status(400).json({ error: error.message })
-    }
-})
+        try {
+            await User.findOneAndUpdate(
+                { _id: req.user.id },
+                { $push: { watchLaterMovies: movie_id } },
+                { upsert: true }
+            )
 
-router.put('/testResult', async (req, res) => {
-    const { user_id, testResult } = req.body
+            const movie = await Movie.findOne({ _id: movie_id })
 
-    try {
-        await User.findOneAndUpdate({ _id: user_id }, { testResult })
+            return res.status(200).json(movie)
+        } catch (error) {
+            return res.status(400).json({ error: error.message })
+        }
+    })
 
-        return res.status(200).json(testResult)
-    } catch (error) {
-        return res.status(400).json({ error: error.message })
-    }
-})
+router.put(
+    '/testResult',
+    authMiddleware,
+    async (req, res) => {
+        const { test_result } = req.body
+
+        try {
+            await User.findOneAndUpdate({ _id: req.user.id }, { testResult: test_result })
+
+            return res.status(200).json({ msg: 'Test result was updated successfully' })
+        } catch (error) {
+            return res.status(400).json({ error: error.message })
+        }
+    })
 
 module.exports = router

@@ -19,12 +19,15 @@
   },
   "homepage": "https://github.com/Leofilms/back-end#readme",
   "nodemonConfig": {
-    "ignore": ["client"]
+    "ignore": [
+      "client"
+    ]
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-validator": "^6.10.0",

@@ -3,23 +3,24 @@ const { Schema, model } = require('mongoose')
 const UserSchema = new Schema({
     nickname: {
         type: String,
-        required: true,
         minLength: 2,
         maxLength: 36,
         trim: true,
+        required: true,
     },
     testResult: {
         type: Array,
+        default: [],
         required: false,
     },
-    favoriteMovies: {
-        type: Array,
-        required: false
-    },
-    watchLaterMovies: {
-        type: Array,
-        required: false
-    },
+    favoriteMovies: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Movie'
+    }],
+    watchLaterMovies: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Movie'
+    }],
     email: {
         type: String,
         required: true,

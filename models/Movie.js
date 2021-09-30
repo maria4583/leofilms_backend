@@ -6,12 +6,8 @@ const movieSchema = new Schema({
         required: true,
         unique: true
     },
-    title_ru: {
-        type: String,
-    },
-    title_en: {
-        type: String,
-    },
+    title_ru: String,
+    title_en: String,
     year: {
         type: Number,
         required: true,
@@ -20,9 +16,7 @@ const movieSchema = new Schema({
         type: Array,
         required: true,
     },
-    producer: {
-        type: String,
-    },
+    producer: String,
     genres: {
         type: Array,
         required: true,
@@ -30,18 +24,10 @@ const movieSchema = new Schema({
     actors: {
         type: String,
     },
-    description: {
-        type: String,
-    },
-    premiere: {
-        type: String,
-    },
-    rating: {
-        type: Number,
-    },
-    vote: {
-        type: Number,
-    },
+    description: String,
+    premiere: String,
+    rating: Number,
+    vote: Number,
     poster: {
         type: String,
         required: true,
@@ -50,9 +36,8 @@ const movieSchema = new Schema({
         type: String,
         required: true,
     }
-},
-{
+}, {
     collection: 'movies'
 })
 
-module.exports = model("movies", movieSchema)
+module.exports = model('Movie', movieSchema)
